@@ -1,5 +1,5 @@
 #include <vector>
-#include <nlopt.hpp>
+#include "nlopt.hpp"
 
 class ContinuousProblemData;
 

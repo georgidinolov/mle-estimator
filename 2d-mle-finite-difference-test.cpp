@@ -7,7 +7,7 @@
 
 int main() {
   
-  unsigned number_data_points = 16;
+  unsigned number_data_points = 64;
   std::vector<ContinuousProblemData> data(number_data_points);
 
   int bm_order = 1000;
@@ -63,14 +63,15 @@ int main() {
  			    sigma_y,
  			    rho);
 
-  double nll = mle_estimator.negative_log_likelihood(64,
-						     1,
-						     1,
+  double nll = mle_estimator.negative_log_likelihood_parallel(64,
+							data,
+						     1,	
+						     1,		
 						     0.0);
   std::cout << "neg log-likelihood = " << nll << std::endl;
   
   std::vector<double> log_sigma_x_sigma_y_rho = 
-    mle_estimator.find_mle(64,
+    mle_estimator.find_mle(128,
   			   1.0,
   			   1.0,
   			   0.0);

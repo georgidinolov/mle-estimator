@@ -2,9 +2,7 @@
 #include <math.h>
 #include <omp.h>
 #include "2DMLEFiniteDifference.hpp"
-// #include "1DAdvectionDiffusionSolverImages.hpp"
 #include "2DHeatEquationFiniteDifferenceSolver.hpp"
-// #include "PDEDataTypes.hpp"
 
 TwoDMLEFiniteDifference::
 TwoDMLEFiniteDifference(const std::vector<ContinuousProblemData>& data,
