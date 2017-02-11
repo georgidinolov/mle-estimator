@@ -95,7 +95,7 @@ negative_log_likelihood_parallel(int order,
   printf("There are %d threads\n",
 	 omp_get_max_threads());
   
-#pragma omp parallel for shared(data) private(i) 
+#pragma omp parallel for private(i) shared(data)
   for (i=0; i<size; ++i) {
     const ContinuousProblemData& datum = data[i];
     double x_0 = datum.get_x_0();
