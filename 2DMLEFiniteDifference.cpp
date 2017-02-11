@@ -198,6 +198,7 @@ wrapper(const std::vector<double> &x,
 	std::vector<double> &grad,
 	void * data)
 {
+  printf("Trying sigma_x=%.32f sigma_y=%.32f rho=%.32f\n", exp(x[0]), exp(x[1]), x[2]);
   std::cout << "trying sigma_x=" << exp(x[0]) << " ";
   std::cout << "sigma_y=" << exp(x[1]) << " ";
   std::cout << "rho=" << x[2] << std::endl;

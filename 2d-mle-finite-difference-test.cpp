@@ -67,9 +67,9 @@ int main() {
   auto t1 = std::chrono::high_resolution_clock::now();
   double nll = mle_estimator.negative_log_likelihood_parallel(64,
 							      data,
-							      2.71828,	
-							      1,		
-							      0.0);
+								0.36787944117144233402427744294982,
+								1.94773404105467573543819526094012,
+								0.31666666666666665186369300499791);
   auto t2 = std::chrono::high_resolution_clock::now();
   std::cout << "duration = "
   	    << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
@@ -77,7 +77,7 @@ int main() {
   std::cout << "neg log-likelihood = " << nll << std::endl;
   
    std::vector<double> log_sigma_x_sigma_y_rho = 
-     mle_estimator.find_mle(32,
+     mle_estimator.find_mle(64,
    			   1.0,
    			   1.0,
    			   0.0);
