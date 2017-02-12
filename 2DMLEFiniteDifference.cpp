@@ -65,7 +65,12 @@ negative_log_likelihood(int order,
 					     c,d,
 					     x,y,
 					     t);
-    neg_log_likelihoods[i] = -log(solver.likelihood());
+    double l = solver.likelihood();
+    std::cout << "On data point "
+	      << i
+	      << " , with likelihood = "
+	      << l << std::endl;
+    neg_log_likelihoods[i] = -log(l);
   }
 
   for (unsigned i=0; i<data_.size(); ++i) {
@@ -119,7 +124,8 @@ negative_log_likelihood_parallel(int order,
 					       c,d,
 					       x,y,
 					       t);
-      neg_log_likelihoods[i] = -log(solver.likelihood());
+    double l = solver.likelihood();
+    neg_log_likelihoods[i] = -log(l);
   }
 
   for (unsigned i=0; i<data.size(); ++i) {

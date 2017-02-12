@@ -7,7 +7,7 @@
 
 int main() {
   
-  unsigned number_data_points = 128;
+  unsigned number_data_points = 20;
   std::vector<ContinuousProblemData> data(number_data_points);
 
   int bm_order = 1000;
@@ -26,8 +26,7 @@ int main() {
       y_initial = data[i-1].get_y_T();
     }
 
-    BrownianMotion BM = BrownianMotion(seed,
-				       bm_order,
+    BrownianMotion BM = BrownianMotion(bm_order,
 				       rho,
 				       sigma_x,
 				       sigma_y,
@@ -65,22 +64,21 @@ int main() {
  			    rho);
 
   auto t1 = std::chrono::high_resolution_clock::now();
-  double nll = mle_estimator.negative_log_likelihood_parallel(64,
-							      data,
-								0.36787944117144233402427744294982,
-								1.94773404105467573543819526094012,
-								0.31666666666666665186369300499791);
+  double nll = mle_estimator.negative_log_likelihood(32,
+						     0.36787944117144233402427744294982,
+						     1.94773404105467573543819526094012,
+						     0.31666666666666665186369300499791);
   auto t2 = std::chrono::high_resolution_clock::now();
   std::cout << "duration = "
   	    << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
   	    << " milliseconds\n";  
   std::cout << "neg log-likelihood = " << nll << std::endl;
   
-   std::vector<double> log_sigma_x_sigma_y_rho = 
-     mle_estimator.find_mle(64,
-   			   1.0,
-   			   1.0,
-   			   0.0);
+    std::vector<double> log_sigma_x_sigma_y_rho = 
+      mle_estimator.find_mle(32,
+			     1.0,
+			     1.0,
+			     0.0);
   
   // std::cout << "sigma_x = " << exp(log_sigma_x_sigma_y_rho[0]) << "\n";
   // std::cout << "sigma_y = " << exp(log_sigma_x_sigma_y_rho[1]) << "\n";
