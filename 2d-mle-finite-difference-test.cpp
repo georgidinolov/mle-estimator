@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
  			    rho);
 
   auto t1 = std::chrono::high_resolution_clock::now();
-  double nll = mle_estimator.negative_log_likelihood(70,
+  double nll = mle_estimator.negative_log_likelihood_parallel(70,
 						     0.36787944117144233,
 						     1.94773404105467573,
 						     0.31666666666666665);
@@ -36,9 +36,9 @@ int main(int argc, char *argv[]) {
   	    << " milliseconds\n";  
   printf("neg log-likelihood = %.16f\n", nll);
   
-  // std::vector<double> log_sigma_x_sigma_y_rho = 
-  //   mle_estimator.find_mle(64,
-  // 			   1.0,
-  // 			   1.0,
-  // 			   0.0);
+   std::vector<double> log_sigma_x_sigma_y_rho = 
+     mle_estimator.find_mle(128,
+   			   1.0,
+   			   1.0,
+   			   0.0);
 }

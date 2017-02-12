@@ -174,11 +174,11 @@ negative_log_likelihood(int order,
 					     x,y,
 					     t);
     double l = solver.likelihood();
-    while (std::signbit(l)) {
-      std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
-      solver.set_order(2*order);
-      l = solver.likelihood();
-    }
+    //while (std::signbit(l)) {
+    //  std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
+    //  solver.set_order(2*order);
+    //  l = solver.likelihood();
+    //}
     std::cout << "On data point "
 	      << i
 	      << " , with likelihood = "
