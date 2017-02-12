@@ -5,154 +5,40 @@
 #include "2DMLEFiniteDifference.hpp"
 #include "PDEDataTypes.hpp"
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    printf("You must provide input\n");
+    printf("The input is: \n load location of data file \n");
+    exit(0);
+  }
   
-  unsigned number_data_points = 10;
-  std::vector<ContinuousProblemData> data(number_data_points);
-
-  int bm_order = 1000;
   double rho = 0.0;
   double sigma_x = 1.0;
   double sigma_y = 1.0;
   double t = 1;
 
-  for (unsigned i=0; i<number_data_points; ++i) {
-    unsigned seed = i;
-    
-    double x_initial = 0;
-    double y_initial = 0;
-    if (i!=0) {
-      x_initial = data[i-1].get_x_T();
-      y_initial = data[i-1].get_y_T();
-    }
-
-    BrownianMotion BM = BrownianMotion(bm_order,
-				       rho,
-				       sigma_x,
-				       sigma_y,
-				       x_initial,
-				       y_initial,
-				       t);
-
-    double a = BM.get_a();
-    double b = BM.get_b();
-    double c = BM.get_c();
-    double d = BM.get_d();
-    double x_T = BM.get_x_T();
-    double y_T = BM.get_y_T();
-
-    std::cout << "(" << a << "," << x_T << "," << b << ") x "
-	      << "(" << c << "," << y_T << "," << d << ")"
-	      << std::endl;
-    
-    ContinuousProblemData datum = ContinuousProblemData(x_T,
-							y_T,
-							x_initial,
-							y_initial,
-							t,
-							a,
-							b,
-							c,
-							d);
-    data[i] = datum;
-  }
-
+  std::string data_file_dir = argv[1];
+  
   TwoDMLEFiniteDifference mle_estimator = 
-    TwoDMLEFiniteDifference(data,
+    TwoDMLEFiniteDifference(data_file_dir,
  			    sigma_x,
  			    sigma_y,
  			    rho);
 
   auto t1 = std::chrono::high_resolution_clock::now();
-  double nll = mle_estimator.negative_log_likelihood(64,
-						     0.36787944117144233402427744294982,
-						     1.94773404105467573543819526094012,
-						     0.31666666666666665186369300499791);
+  double nll = mle_estimator.negative_log_likelihood(70,
+						     0.36787944117144233,
+						     1.94773404105467573,
+						     0.31666666666666665);
   auto t2 = std::chrono::high_resolution_clock::now();
   std::cout << "duration = "
   	    << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
   	    << " milliseconds\n";  
-  std::cout << "neg log-likelihood = " << nll << std::endl;
+  printf("neg log-likelihood = %.16f\n", nll);
   
-  std::vector<double> log_sigma_x_sigma_y_rho = 
-    mle_estimator.find_mle(64,
-			   1.0,
-			   1.0,
-			   0.0);
-  
-  // std::cout << "sigma_x = " << exp(log_sigma_x_sigma_y_rho[0]) << "\n";
-  // std::cout << "sigma_y = " << exp(log_sigma_x_sigma_y_rho[1]) << "\n";
-  // std::cout << "rho = " << log_sigma_x_sigma_y_rho[2] << std::endl;
-  
-  int discretization_size = 9;
-  // double lower_log_sigma = -0.3;
-  // double uppper_log_sigma = 0.2;
-  // std::vector<double> log_sigma_x_vector(discretization_size+1);
-  // std::vector<double> log_sigma_y_vector(discretization_size+1);
-  // for (int i=0; i<discretization_size+1; ++i) {
-  //   if (i==0) {
-  //     log_sigma_x_vector[i] = lower_log_sigma;
-  //     log_sigma_y_vector[i] = lower_log_sigma;
-  //   } else {
-  //     double log_sigma = lower_log_sigma + 
-  //       1.0*i*(uppper_log_sigma-lower_log_sigma)/(1.0*discretization_size);
-  //     log_sigma_x_vector[i] = log_sigma;
-  //     log_sigma_y_vector[i] = log_sigma;
-  //   }
-  // }
-  
-  // std::ofstream likelihood_map;
-  // likelihood_map.open("/home/gdinolov/Research/PDE-solvers/documentation/2-D-advection-diffusion/likelihood-map.csv");
-  // // header
-  // likelihood_map << "log.sigma.x, log.sigma.y, neg.ll\n";
-  // for (int i=0; i<discretization_size+1; ++i) {
-  //   for (int j=0; j<discretization_size+1; ++j) {
-  //     double sigma_x = exp(log_sigma_x_vector[i]);
-  //     double sigma_y = exp(log_sigma_y_vector[j]);
-  
-  //     std::cout << "On iteration " << (discretization_size+1)*i + (j+1)
-  // 	       << " out of " << (discretization_size+1)*(discretization_size+1)
-  // 	       << std::endl;
-  
-  //     double neg_ll = mle_estimator.negative_log_likelihood(32,
-  //     							   sigma_x,
-  //     							   sigma_y,
-  //     							   rho);
-  
-  //     likelihood_map << log_sigma_x_vector[i] 
-  // 		    << ","
-  // 		    << log_sigma_y_vector[j]
-  // 		    << "," 
-  // 		    << neg_ll << "\n";
-  //   }
-  // }
-  // likelihood_map.close();
-  
-  // sigma_x = 1;
-  // sigma_y = 1;
-  // std::ofstream rho_likelihood_map;
-  // rho_likelihood_map.open("/home/gdinolov/Research/PDE-solvers/documentation/2-D-advection-diffusion/rho-likelihood-map.csv");
-  // // header
-  // rho_likelihood_map << "rho, neg.ll\n";
-  // double rho_lower = 0.2;
-  // double rho_upper = 0.8;
-  // for (int i=0; i<discretization_size+1; ++i) {
-  //   double rho_current = rho_lower + 
-  //     i*(rho_upper-rho_lower)/(discretization_size+1);
-
-  //   std::cout << "On iteration "
-  // 	     << (i+1)
-  // 	     << std::endl;
-  
-  //   double neg_ll = mle_estimator.negative_log_likelihood(32,
-  // 							 sigma_x,
-  // 							 sigma_y,
-  // 							 rho_current);
-  
-  //   rho_likelihood_map << rho_current
-  // 		      << ","
-  // 		      << neg_ll << "\n";
-  
-  // }
-  // rho_likelihood_map.close();
+  // std::vector<double> log_sigma_x_sigma_y_rho = 
+  //   mle_estimator.find_mle(64,
+  // 			   1.0,
+  // 			   1.0,
+  // 			   0.0);
 }

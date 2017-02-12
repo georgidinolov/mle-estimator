@@ -6,7 +6,12 @@ class ContinuousProblemData;
 class TwoDMLEFiniteDifference
 {
 public:
-  TwoDMLEFiniteDifference(const std::vector<ContinuousProblemData>& data,
+  TwoDMLEFiniteDifference(std::string data_file_dir,
+			  double sigma_x_0,
+  			  double sigma_y_0,
+  			  double rho_0);
+  
+  TwoDMLEFiniteDifference(std::vector<ContinuousProblemData> data,
 			  double sigma_x_0,
 			  double sigma_y_0,
 			  double rho_0);
@@ -19,18 +24,16 @@ public:
 				 double rho);
 
   double negative_log_likelihood_parallel(int order,
-					  const std::vector<ContinuousProblemData>& data,
 					  double sigma_x,
 					  double sigma_y,
-					  double rho);
+					  double rho) const;
 
   std::vector<double> find_mle(int order,
 			       double sigma_x,
 			       double sigma_y,
 			       double rho);
-
 private:
-  const std::vector<ContinuousProblemData>& data_;
+  std::vector<ContinuousProblemData> data_;
   double sigma_x_;
   double sigma_y_;
   double rho_;

@@ -1,11 +1,117 @@
+#include <fstream>
+#include <iostream>
 #include <vector>
 #include <math.h>
 #include <omp.h>
+#include <string>
 #include "2DMLEFiniteDifference.hpp"
 #include "2DHeatEquationFiniteDifferenceSolver.hpp"
 
 TwoDMLEFiniteDifference::
-TwoDMLEFiniteDifference(const std::vector<ContinuousProblemData>& data,
+TwoDMLEFiniteDifference(std::string data_file_dir,
+			double sigma_x_0,
+			double sigma_y_0,
+			double rho_0)
+  : data_(std::vector<ContinuousProblemData> (0)),
+    sigma_x_(sigma_x_0),
+    sigma_y_(sigma_y_0),
+    rho_(rho_0),
+    log_likelihood_(0)
+{
+  std::cout << data_file_dir << std::endl;
+  std::ifstream data_file (data_file_dir);
+  std::string value;
+
+  double sigma_x;
+  double sigma_y;
+  double rho;
+  double x_0;
+  double y_0;
+  double t;
+  double a;
+  double x_T;
+  double b;
+  double c;
+  double y_T;
+  double d;
+
+  if (data_file.is_open()) {
+    std::cout << "FILE IS OPEN" << std::endl;
+    // go through header
+    for (int i=0; i<12; ++i) {
+      if (i < 11) {
+	std::getline(data_file, value, ',');
+      } else {
+	std::getline(data_file, value);
+      }
+    }
+
+    // first value on the row is sigma_x
+    while (std::getline(data_file, value, ',')) {
+      sigma_x = std::stod(value);
+
+      // second value on the row is sigma_y
+      std::getline(data_file, value, ',');
+      sigma_y = std::stod(value);
+
+      // third value on the row is rho
+      std::getline(data_file, value, ',');
+      rho = std::stod(value);
+
+      // fourth value on the row is x_0
+      std::getline(data_file, value, ',');
+      x_0 = std::stod(value);
+
+      // fifth value on the row is y_0
+      std::getline(data_file, value, ',');
+      y_0 = std::stod(value);
+
+      // 6th  value on the row is t
+      std::getline(data_file, value, ',');
+      t = std::stod(value);
+
+      // 7th value on the row is a
+      std::getline(data_file, value, ',');
+      a = std::stod(value);
+
+      // 8th value on the row is x_T
+      std::getline(data_file, value, ',');
+      x_T = std::stod(value);
+
+      // 9th value on the row is b
+      std::getline(data_file, value, ',');
+      b = std::stod(value);
+
+      // 10th value on the row is c
+      std::getline(data_file, value, ',');
+      c = std::stod(value);
+
+      // 11th value on the row is x_T
+      std::getline(data_file, value, ',');
+      y_T = std::stod(value);
+
+      // 12th value on the row is x_T
+      // also the last value in this row
+      std::getline(data_file, value);
+      d = std::stod(value);
+
+      std::cout << "(" << x_T << "," << y_T << ","
+		<< x_0 << "," << y_0 << "," << t
+		<< a << "," << b << "," << c << "," << d
+		<< ")" << std::endl;
+      ContinuousProblemData datum = ContinuousProblemData(x_T,
+							  y_T,
+							  x_0,
+							  y_0,
+							  t,
+							  a,b,c,d);
+      data_.push_back(datum);
+    }
+  }
+}
+
+TwoDMLEFiniteDifference::
+TwoDMLEFiniteDifference(const std::vector<ContinuousProblemData> data,
 			double sigma_x_0,
 			double sigma_y_0,
 			double rho_0)
@@ -33,28 +139,30 @@ negative_log_likelihood(int order,
 			double sigma_y,
 			double rho)
 {
+  const std::vector<ContinuousProblemData>& data = data_;
   sigma_x_ = sigma_x;
   sigma_y_ = sigma_y;
   rho_ = rho;
   double neg_ll = 0;
 
-  std::vector<double> neg_log_likelihoods (data_.size());
+  std::vector<double> neg_log_likelihoods (data.size());
   unsigned i;
 
-  for (i=0; i<data_.size(); ++i) {
-    const ContinuousProblemData& datum = data_[i];
+  std::cout << "data.size() = " << data.size() << std::endl;
+  for (i=0; i<data.size(); ++i) {
+    const ContinuousProblemData& datum = data[i];
     std::cout << datum << std::endl;
-    double x_0 = data_[i].get_x_0();
-    double y_0 = data_[i].get_y_0();
+    double x_0 = data[i].get_x_0();
+    double y_0 = data[i].get_y_0();
     
-    double a = data_[i].get_a() - x_0;
-    double b = data_[i].get_b() - x_0;
-    double c = data_[i].get_c() - y_0;
-    double d = data_[i].get_d() - y_0;
-    double t = data_[i].get_t();
+    double a = data[i].get_a() - x_0;
+    double b = data[i].get_b() - x_0;
+    double c = data[i].get_c() - y_0;
+    double d = data[i].get_d() - y_0;
+    double t = data[i].get_t();
 
-    double x = data_[i].get_x_T() - x_0;
-    double y = data_[i].get_y_T() - y_0;
+    double x = data[i].get_x_T() - x_0;
+    double y = data[i].get_y_T() - y_0;
 
     TwoDHeatEquationFiniteDifferenceSolver solver = 
       TwoDHeatEquationFiniteDifferenceSolver(order,
@@ -66,14 +174,26 @@ negative_log_likelihood(int order,
 					     x,y,
 					     t);
     double l = solver.likelihood();
+    while (std::signbit(l)) {
+      std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
+      solver.set_order(2*order);
+      l = solver.likelihood();
+    }
     std::cout << "On data point "
 	      << i
 	      << " , with likelihood = "
-	      << l << std::endl;
+	      << l << ";\n";
+      std::cout << "and with -log(l) =" << -log(l) << std::endl;
+    
     neg_log_likelihoods[i] = -log(l);
   }
 
+  neg_ll = 0;
   for (unsigned i=0; i<data_.size(); ++i) {
+    std::cout << "neg_log_likelihoods[" << i
+	      << "] = "
+	      << neg_log_likelihoods[i]
+	      << std::endl;
     neg_ll = neg_ll + neg_log_likelihoods[i];
   }
 
@@ -82,53 +202,70 @@ negative_log_likelihood(int order,
 
 double TwoDMLEFiniteDifference::
 negative_log_likelihood_parallel(int order,
-				 const std::vector<ContinuousProblemData>& data,
 				 double sigma_x,
 				 double sigma_y,
-				 double rho)
+				 double rho) const
 {
-  double neg_ll = 0;
+  // const std::vector<ContinuousProblemData>& data = data_;
+   std::vector<double> neg_log_likelihoods (data_.size());
 
-  std::vector<double> neg_log_likelihoods (data.size());
-  unsigned i;
-  unsigned size = data.size();
+   //   TwoDHeatEquationFiniteDifferenceSolver solver;
+   std::vector<TwoDHeatEquationFiniteDifferenceSolver> solvers (0);
+   double l = 0;
+   int size = data_.size();
+  
+   std::cout << "IN PARALLEL CALL" << std::endl;
+   for (unsigned i=0; i<data_.size(); ++i) {
+     std::cout << data_[i] << std::endl;
+     solvers.
+       push_back(TwoDHeatEquationFiniteDifferenceSolver(order,
+							rho,
+							sigma_x,
+							sigma_y,
+							data_[i].get_a()-data_[i].get_x_0(),
+							data_[i].get_b()-data_[i].get_x_0(),
+							data_[i].get_c()-data_[i].get_y_0(),
+							data_[i].get_d()-data_[i].get_y_0(),
+							data_[i].get_x_T()-data_[i].get_x_0(),
+							data_[i].get_y_T()-data_[i].get_y_0(),
+							data_[i].get_t()));
+   }
 
-  omp_set_dynamic(0);
+  omp_set_dynamic(1);
   printf("Master construct is executed by thread %d\n",
 	 omp_get_thread_num());
   
   printf("There are %d threads\n",
 	 omp_get_max_threads());
   
-#pragma omp parallel for private(i) shared(data, neg_log_likelihoods)
-  for (i=0; i<size; ++i) {
-    const ContinuousProblemData& datum = data[i];
-    double x_0 = datum.get_x_0();
-    double y_0 = datum.get_y_0();
-    
-    double a = datum.get_a() - x_0;
-    double b = datum.get_b() - x_0;
-    double c = datum.get_c() - y_0;
-    double d = datum.get_d() - y_0;
-    double t = datum.get_t();
-    
-    double x = datum.get_x_T() - x_0;
-    double y = datum.get_y_T() - y_0;
-    
-    TwoDHeatEquationFiniteDifferenceSolver solver = 
-	TwoDHeatEquationFiniteDifferenceSolver(order,
-					       rho,
-					       sigma_x,
-					       sigma_y,
-					       a,b,
-					       c,d,
-					       x,y,
-					       t);
-    double l = solver.likelihood();
-    neg_log_likelihoods[i] = -log(l);
+  unsigned i;
+  
+#pragma omp parallel private(i,l) shared(solvers, neg_log_likelihoods,sigma_x,sigma_y,rho)
+  {
+#pragma omp for 
+    for (i=0; i<data_.size(); ++i) {
+      std::cout << "On data point "
+		<< i << std::endl;
+
+      l = solvers[i].likelihood();
+      while (std::signbit(l)) {
+	std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
+	solvers[i].set_order(2*order);
+	l = solvers[i].likelihood();
+      }
+      std::cout << "likelihood = "
+    	      << l << std::endl;
+      std::cout << "and with -log(l) =" << -log(l) << std::endl;
+      neg_log_likelihoods[i] = -log(l);
+    }
   }
 
-  for (unsigned i=0; i<data.size(); ++i) {
+  double neg_ll = 0;
+  for (unsigned i=0; i<data_.size(); ++i) {
+    std::cout << "neg_log_likelihoods[" << i
+	      << "] = "
+	      << neg_log_likelihoods[i]
+	      << std::endl;
     neg_ll = neg_ll + neg_log_likelihoods[i];
   }
 
@@ -193,7 +330,6 @@ neg_ll_for_optimizer(const std::vector<double> &x,
   double rho = x[2];
   
   return negative_log_likelihood_parallel(order_,
-					  data_,
 					  sigma_x,
 					  sigma_y,
 					  rho) / (sigma_x * sigma_y);
