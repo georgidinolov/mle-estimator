@@ -230,10 +230,11 @@ negative_log_likelihood_parallel(int order,
 
       int order_current = order;
       while (std::signbit(l)) {
-	std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
+	double old_l = l;
 	order_current = order_current * 2;
 	solvers[i].set_order(order_current);
 	l = solvers[i].likelihood();
+	std::cout << "SIGN NEGATIVE: current l =" << old_l << ", and new l=" << l << std::endl;
       }
       neg_log_likelihoods[i] = -log(l);
     }
