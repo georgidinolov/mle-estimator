@@ -247,7 +247,6 @@ negative_log_likelihood_parallel(int order,
 	std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
 	l = 1;
       }
-      std::cout << "l=" << l << std::endl;
       neg_log_likelihoods[i] = -log(l);
     }
   }
