@@ -5,7 +5,7 @@ cc_binary(
 	        "//src/mle-estimator:2d-mle-finite-difference"],
 	copts = ["-Isrc/nlopt/api",
 		 "-Isrc/finite-difference-arpack-igraph",
-		 "-O2"],
+		 "-O"],
 )
 
 cc_binary(
@@ -15,7 +15,7 @@ cc_binary(
 	        "//src/mle-estimator:2d-mle-finite-difference"],
 	copts = ["-Isrc/nlopt/api",
 		 "-Isrc/finite-difference-arpack-igraph",
-		 "-O2"],
+		 "-O"],
 )
 
 cc_binary(

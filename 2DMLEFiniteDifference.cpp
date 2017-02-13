@@ -169,9 +169,10 @@ negative_log_likelihood(int order,
 					     t);
     double l = solver.likelihood();
     if (std::signbit(l)) {
-     std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
+     double l_current = l;
      solver.set_order(2*order);
      l = solver.likelihood();
+     std::cout << "SIGN NEGATIVE: current l =" << l_current << " with new l =" << l << std::endl;
     }
     
     neg_log_likelihoods[i] = -log(l);
@@ -218,12 +219,6 @@ negative_log_likelihood_parallel(int order,
    }
 
   omp_set_dynamic(1);
-  printf("Master construct is executed by thread %d\n",
-	 omp_get_thread_num());
-  
-  printf("There are %d threads\n",
-	 omp_get_max_threads());
-  
   unsigned i;
   
 #pragma omp parallel private(i,l) shared(solvers, neg_log_likelihoods,sigma_x,sigma_y,rho)
