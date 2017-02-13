@@ -22,9 +22,6 @@ TwoDMLEFiniteDifference(std::string data_file_dir,
   std::ifstream data_file (data_file_dir);
   std::string value;
 
-  double sigma_x;
-  double sigma_y;
-  double rho;
   double x_0;
   double y_0;
   double t;
@@ -48,15 +45,15 @@ TwoDMLEFiniteDifference(std::string data_file_dir,
 
     // first value on the row is sigma_x
     while (std::getline(data_file, value, ',')) {
-      sigma_x = std::stod(value);
+      double sigma_x = std::stod(value);
 
       // second value on the row is sigma_y
       std::getline(data_file, value, ',');
-      sigma_y = std::stod(value);
+      double sigma_y = std::stod(value);
 
       // third value on the row is rho
       std::getline(data_file, value, ',');
-      rho = std::stod(value);
+      double rho = std::stod(value);
 
       // fourth value on the row is x_0
       std::getline(data_file, value, ',');
@@ -148,10 +145,7 @@ negative_log_likelihood(int order,
   std::vector<double> neg_log_likelihoods (data.size());
   unsigned i;
 
-  std::cout << "data.size() = " << data.size() << std::endl;
   for (i=0; i<data.size(); ++i) {
-    const ContinuousProblemData& datum = data[i];
-    std::cout << datum << std::endl;
     double x_0 = data[i].get_x_0();
     double y_0 = data[i].get_y_0();
     
@@ -174,16 +168,11 @@ negative_log_likelihood(int order,
 					     x,y,
 					     t);
     double l = solver.likelihood();
-    //while (std::signbit(l)) {
-    //  std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
-    //  solver.set_order(2*order);
-    //  l = solver.likelihood();
-    //}
-    std::cout << "On data point "
-	      << i
-	      << " , with likelihood = "
-	      << l << ";\n";
-      std::cout << "and with -log(l) =" << -log(l) << std::endl;
+    if (std::signbit(l)) {
+     std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
+     solver.set_order(2*order);
+     l = solver.likelihood();
+    }
     
     neg_log_likelihoods[i] = -log(l);
   }
@@ -212,11 +201,8 @@ negative_log_likelihood_parallel(int order,
    //   TwoDHeatEquationFiniteDifferenceSolver solver;
    std::vector<TwoDHeatEquationFiniteDifferenceSolver> solvers (0);
    double l = 0;
-   int size = data_.size();
   
-   std::cout << "IN PARALLEL CALL" << std::endl;
    for (unsigned i=0; i<data_.size(); ++i) {
-     std::cout << data_[i] << std::endl;
      solvers.
        push_back(TwoDHeatEquationFiniteDifferenceSolver(order,
 							rho,
@@ -244,28 +230,22 @@ negative_log_likelihood_parallel(int order,
   {
 #pragma omp for 
     for (i=0; i<data_.size(); ++i) {
-      std::cout << "On data point "
-		<< i << std::endl;
 
       l = solvers[i].likelihood();
+
+      int order_current = order;
       while (std::signbit(l)) {
 	std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
-	solvers[i].set_order(2*order);
+	order_current = order_current * 2;
+	solvers[i].set_order(order_current);
 	l = solvers[i].likelihood();
       }
-      std::cout << "likelihood = "
-    	      << l << std::endl;
-      std::cout << "and with -log(l) =" << -log(l) << std::endl;
       neg_log_likelihoods[i] = -log(l);
     }
   }
 
   double neg_ll = 0;
   for (unsigned i=0; i<data_.size(); ++i) {
-    std::cout << "neg_log_likelihoods[" << i
-	      << "] = "
-	      << neg_log_likelihoods[i]
-	      << std::endl;
     neg_ll = neg_ll + neg_log_likelihoods[i];
   }
 

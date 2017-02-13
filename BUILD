@@ -1,11 +1,21 @@
 cc_binary(
+	name = "2d-mle-finite-difference-test",
+	srcs = ["2d-mle-finite-difference-test.cpp"],
+	deps = ["//src/brownian-motion:2d-brownian-motion",
+	        "//src/mle-estimator:2d-mle-finite-difference"],
+	copts = ["-Isrc/nlopt/api",
+		 "-Isrc/finite-difference-arpack-igraph",
+		 "-O2"],
+)
+
+cc_binary(
 	name = "2d-mle-finite-difference-data",
 	srcs = ["2d-mle-finite-difference.cpp"],
 	deps = ["//src/brownian-motion:2d-brownian-motion",
-	        "//src/mle-estimator:2d-mle-finite-difference",
-		"//src/mle-estimator:2d-mle-method-of-images"],
-	copts = ["-Isrc/images-expansion/",
-		 "-Isrc/finite-difference-arpack-version-2/"],
+	        "//src/mle-estimator:2d-mle-finite-difference"],
+	copts = ["-Isrc/nlopt/api",
+		 "-Isrc/finite-difference-arpack-igraph",
+		 "-O2"],
 )
 
 cc_binary(
@@ -48,15 +58,6 @@ cc_binary(
 		 "-Isrc/finite-difference-arpack-version-2/"],
 )
 
-cc_binary(
-	name = "2d-mle-finite-difference-test",
-	srcs = ["2d-mle-finite-difference-test.cpp"],
-	deps = ["//src/brownian-motion:2d-brownian-motion",
-	        "//src/mle-estimator:2d-mle-finite-difference"],
-	copts = ["-Isrc/nlopt/api",
-		 "-Isrc/finite-difference-arpack-igraph",
-		 "-O"],
-)
 
 cc_binary(
 	name = "2d-mle-method-of-images-test",
