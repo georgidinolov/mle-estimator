@@ -146,6 +146,9 @@ negative_log_likelihood(int order,
   unsigned i;
 
   for (i=0; i<data.size(); ++i) {
+    std::cout << "on data point " << i << std::endl;
+    std::cout << data[i] << std::endl;
+    
     double x_0 = data[i].get_x_0();
     double y_0 = data[i].get_y_0();
     
@@ -167,12 +170,19 @@ negative_log_likelihood(int order,
 					     c,d,
 					     x,y,
 					     t);
+    const BoundaryIndeces& bi = solver.get_boundary_indeces();
+    std::cout << bi << std::endl;
+    
     double l = solver.likelihood();
-    if (std::signbit(l)) {
+    int order_current = order;
+    while (std::signbit(l)) {
      double l_current = l;
-     solver.set_order(2*order);
+     solver.set_order(2*order_current);
      l = solver.likelihood();
-     std::cout << "SIGN NEGATIVE: current l =" << l_current << " with new l =" << l << std::endl;
+     std::cout << "SIGN NEGATIVE: current l ="
+	       << l_current << " with new l =" << l
+	       << " order = " << 2*order_current << std::endl;
+     order_current = 2*order_current;
     }
     
     neg_log_likelihoods[i] = -log(l);
@@ -228,14 +238,16 @@ negative_log_likelihood_parallel(int order,
 
       l = solvers[i].likelihood();
 
-      int order_current = order;
-      while (std::signbit(l)) {
-	double old_l = l;
-	order_current = order_current * 2;
-	solvers[i].set_order(order_current);
-	l = solvers[i].likelihood();
-	std::cout << "SIGN NEGATIVE: current l =" << old_l << ", and new l=" << l << std::endl;
+      //      int order_current = order;
+      if (std::signbit(l)) {
+	// double old_l = l;
+	// order_current = order_current * 2;
+	// solvers[i].set_order(order_current);
+	// l = solvers[i].likelihood();
+	std::cout << "SIGN NEGATIVE: current l =" << l << std::endl;
+	l = 1;
       }
+      std::cout << "l=" << l << std::endl;
       neg_log_likelihoods[i] = -log(l);
     }
   }
