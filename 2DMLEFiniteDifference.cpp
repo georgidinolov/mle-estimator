@@ -218,7 +218,7 @@ negative_log_likelihood_parallel(int order,
 							data_[i].get_t()));
    }
 
-  omp_set_dynamic(1);
+  omp_set_dynamic(0);
   unsigned i;
   
 #pragma omp parallel private(i,l) shared(solvers, neg_log_likelihoods,sigma_x,sigma_y,rho)
