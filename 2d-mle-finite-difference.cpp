@@ -6,18 +6,19 @@
 #include "PDEDataTypes.hpp"
 
 int main(int argc, char *argv[]) {
-  if (argc < 7) {
+  if (argc < 8) {
     printf("You must provide input\n");
-    printf("The input is: \n data file; \n output file; \n int order of numerical accuracy (try 32, 64, or 128 for now); \n initial guess for sigma_x; \n initial guess for sigma_y; \n initial guess for rho; \n");
+    printf("The input is: \n data file; \n output file; \n int order of numerical accuracy (try 32, 64, or 128 for now); \n relative tolerance for function during mle estimation (as double); \n initial guess for sigma_x; \n initial guess for sigma_y; \n initial guess for rho; \n");
     exit(0);
   }
 
   std::string data_file_dir = argv[1];
   std::string output_file_name = argv[2];
   int order = std::stoi(argv[3]);
-  double sigma_x = std::stod(argv[4]);
-  double sigma_y = std::stod(argv[5]);
-  double rho = std::stod(argv[6]);
+  double rel_tol = std::stod(argv[4]);
+  double sigma_x = std::stod(argv[5]);
+  double sigma_y = std::stod(argv[6]);
+  double rho = std::stod(argv[7]);
 
   std::ofstream output_file;
   output_file.open(output_file_name);
@@ -32,6 +33,7 @@ int main(int argc, char *argv[]) {
 
    std::vector<double> log_sigma_x_sigma_y_rho = 
      mle_estimator.find_mle(order,
+			    rel_tol,
 			    sigma_x,
 			    sigma_y,
 			    rho);

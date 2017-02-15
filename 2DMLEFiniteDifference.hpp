@@ -29,6 +29,7 @@ public:
 					  double rho) const;
 
   std::vector<double> find_mle(int order,
+			       double rel_tol,
 			       double sigma_x,
 			       double sigma_y,
 			       double rho);

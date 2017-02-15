@@ -261,6 +261,7 @@ negative_log_likelihood_parallel(int order,
 
 std::vector<double> TwoDMLEFiniteDifference::
 find_mle(int order,
+	 double rel_tol,
 	 double sigma_x,
 	 double sigma_y,
 	 double rho)
@@ -273,7 +274,7 @@ find_mle(int order,
   nlopt::opt opt(nlopt::LN_NELDERMEAD, 3);
 
   std::cout << "in find mle " << std::endl;
-  opt.set_ftol_rel(1e-2);
+  opt.set_ftol_rel(rel_tol);
   printf("rel tol = %.16e\n",  opt.get_ftol_rel());
   std::cout << "relative tolerance = " << opt.get_ftol_rel()
 	    << std::endl;

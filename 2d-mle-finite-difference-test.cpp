@@ -6,17 +6,18 @@
 #include "PDEDataTypes.hpp"
 
 int main(int argc, char *argv[]) {
-  if (argc < 6) {
+  if (argc < 7) {
     printf("You must provide input\n");
-    printf("The input is: \n load location of data file; int order of numerical accuracy (try 32, 64, or 128 for now); \n initial guess for sigma_x; \n initial guess for sigma_y; \n initial guess for rho; \n");
+    printf("The input is: \n load location of data file; int order of numerical accuracy (try 32, 64, or 128 for now); \n relative tolerance for convergence of mle; \n initial guess for sigma_x; \n initial guess for sigma_y; \n initial guess for rho; \n");
     exit(0);
   }
 
   std::string data_file_dir = argv[1];
   int order = std::stoi(argv[2]);
-  double sigma_x = std::stod(argv[3]);
-  double sigma_y = std::stod(argv[4]);
-  double rho = std::stod(argv[5]);
+  double rel_tol = std::stod(argv[3]);
+  double sigma_x = std::stod(argv[4]);
+  double sigma_y = std::stod(argv[5]);
+  double rho = std::stod(argv[6]);
   
   TwoDMLEFiniteDifference mle_estimator = 
     TwoDMLEFiniteDifference(data_file_dir,
@@ -34,6 +35,7 @@ int main(int argc, char *argv[]) {
   
    std::vector<double> log_sigma_x_sigma_y_rho = 
     mle_estimator.find_mle(order,
+			   rel_tol,
 			   sigma_x,
 			   sigma_y,
 			   rho);
