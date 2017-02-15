@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
 
    output_file << exp(log_sigma_x_sigma_y_rho[0]) << ","
 	       << exp(log_sigma_x_sigma_y_rho[1]) << ","
-	       << log_sigma_x_sigma_y_rho[2] << "\n";
+	       << 2* exp(log_sigma_x_sigma_y_rho[2])/
+     (exp(log_sigma_x_sigma_y_rho[2]) + 1) - 1<< "\n";
    output_file.close();
 }
