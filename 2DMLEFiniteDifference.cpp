@@ -339,7 +339,7 @@ neg_ll_for_optimizer(const std::vector<double> &x,
 					  sigma_x,
 					  sigma_y,
 					  rho)
-    + x[0] + x[1] + (log(2) + x[2] - 2*log(exp(x[2])+1));
+    - x[0] - x[1] - (log(2) + x[2] - 2*log(exp(x[2])+1));
 }
 
 double TwoDMLEFiniteDifference::
