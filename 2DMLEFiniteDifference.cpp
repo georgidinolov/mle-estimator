@@ -7,6 +7,24 @@
 #include "2DMLEFiniteDifference.hpp"
 #include "2DHeatEquationFiniteDifferenceSolver.hpp"
 
+namespace{
+  inline double logit(double r) {
+    return log(r/(1-r));
+  }
+
+  inline double logit_2(double rho) {
+    return logit((rho+1)/2);
+  }
+
+  inline double logit_inv(double alpha) {
+    return exp(alpha)/(exp(alpha)+1);
+  }
+
+  inline double logit_2_inv(double alpha) {
+    return 2 * logit_inv(alpha) - 1;
+  }
+}
+
 TwoDMLEFiniteDifference::
 TwoDMLEFiniteDifference(std::string data_file_dir,
 			double sigma_x_0,
@@ -281,10 +299,10 @@ find_mle(int order,
 
   std::vector<double> log_sigma_x_sigma_y_rho = {log(sigma_x), 
 						 log(sigma_y), 
-						 rho};
+						 logit_2(rho)};
   
-  std::vector<double> lb = {-HUGE_VAL, -HUGE_VAL,-0.95};
-  std::vector<double> ub = {HUGE_VAL, HUGE_VAL,0.95};
+  std::vector<double> lb = {-HUGE_VAL, -HUGE_VAL,-HUGE_VAL};
+  std::vector<double> ub = {HUGE_VAL, HUGE_VAL,HUGE_VAL};
 
   opt.set_lower_bounds(lb);
   opt.set_upper_bounds(ub);
@@ -315,12 +333,13 @@ neg_ll_for_optimizer(const std::vector<double> &x,
   
   double sigma_x = exp(x[0]);
   double sigma_y = exp(x[1]);
-  double rho = x[2];
+  double rho = logit_2_inv(x[2]);
   
   return negative_log_likelihood_parallel(order_,
 					  sigma_x,
 					  sigma_y,
-					  rho) / (sigma_x * sigma_y);
+					  rho)
+    + x[0] + x[1] + (log(2) + x[2] - 2*log(exp(x[2])+1));
 }
 
 double TwoDMLEFiniteDifference::
@@ -328,10 +347,13 @@ wrapper(const std::vector<double> &x,
 	std::vector<double> &grad,
 	void * data)
 {
-  printf("Trying sigma_x=%.32f sigma_y=%.32f rho=%.32f\n", exp(x[0]), exp(x[1]), x[2]);
+  printf("Trying sigma_x=%.32f sigma_y=%.32f rho=%.32f\n", 
+	 exp(x[0]), 
+	 exp(x[1]), 
+	 logit_2_inv(x[2]));
   std::cout << "trying sigma_x=" << exp(x[0]) << " ";
   std::cout << "sigma_y=" << exp(x[1]) << " ";
-  std::cout << "rho=" << x[2] << std::endl;
+  std::cout << "rho=" << logit_2_inv(x[2]) << std::endl;
   TwoDMLEFiniteDifference * mle = reinterpret_cast<TwoDMLEFiniteDifference*>(data);
   double out = mle->operator()(x,grad);
   std::cout << "neg log-likelihood = " << out << std::endl;
