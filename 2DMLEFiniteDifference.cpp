@@ -336,11 +336,11 @@ neg_ll_for_optimizer(const std::vector<double> &x,
   double sigma_y = exp(x[1]);
   double rho = logit_2_inv(x[2]);
   
-  return negative_log_likelihood_parallel(order_,
+  return (negative_log_likelihood_parallel(order_,
 					  sigma_x,
 					  sigma_y,
 					  rho)
-    - x[0] - x[1] - (log(2) + x[2] - 2*log(exp(x[2])+1));
+	  - x[0] - x[1] - (log(2) + x[2] - 2*log(exp(x[2])+1)));
 }
 
 double TwoDMLEFiniteDifference::
