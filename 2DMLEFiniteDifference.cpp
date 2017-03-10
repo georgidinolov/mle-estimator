@@ -23,6 +23,11 @@ namespace{
   inline double logit_2_inv(double alpha) {
     return 2 * logit_inv(alpha) - 1;
   }
+
+  inline double round_32(double input) {
+    double divisor = 1.0/32.0;
+    return divisor * std::round(input/divisor);
+  }
 }
 
 TwoDMLEFiniteDifference::
@@ -270,6 +275,7 @@ negative_log_likelihood_parallel(int order,
     }
   }
 
+
   double neg_ll = 0;
   for (unsigned i=0; i<data_.size(); ++i) {
     neg_ll = neg_ll + neg_log_likelihoods[i];
@@ -277,6 +283,84 @@ negative_log_likelihood_parallel(int order,
 
   return neg_ll;
 }
+
+
+std::vector<double> TwoDMLEFiniteDifference::
+negative_log_likelihoods_parallel(int order,
+				 double sigma_x,
+				 double sigma_y,
+				 double rho) const
+{
+  // const std::vector<ContinuousProblemData>& data = data_;
+   std::vector<double> neg_log_likelihoods (data_.size());
+
+   //   TwoDHeatEquationFiniteDifferenceSolver solver;
+   std::vector<TwoDHeatEquationFiniteDifferenceSolver> solvers (0);
+   double l = 0;
+  
+   for (unsigned i=0; i<data_.size(); ++i) {
+     solvers.
+       push_back(TwoDHeatEquationFiniteDifferenceSolver(order,
+							rho,
+							sigma_x,
+							sigma_y,
+							data_[i].get_a()-data_[i].get_x_0(),
+							data_[i].get_b()-data_[i].get_x_0(),
+							data_[i].get_c()-data_[i].get_y_0(),
+							data_[i].get_d()-data_[i].get_y_0(),
+							data_[i].get_x_T()-data_[i].get_x_0(),
+							data_[i].get_y_T()-data_[i].get_y_0(),
+							data_[i].get_t()));
+   }
+
+  omp_set_dynamic(0);
+  unsigned i;
+  
+#pragma omp parallel private(i,l) shared(solvers, neg_log_likelihoods,sigma_x,sigma_y,rho)
+  {
+#pragma omp for 
+    for (i=0; i<data_.size(); ++i) {
+
+      l = solvers[i].likelihood();
+
+      neg_log_likelihoods[i] = -log(l);
+    }
+  }
+
+  return neg_log_likelihoods;
+}
+
+std::vector<ContinuousProblemData> TwoDMLEFiniteDifference::
+quantized_continuous_data(int order,
+			  double sigma_x,
+			  double sigma_y,
+			  double rho) const
+{
+  // const std::vector<ContinuousProblemData>& data = data_;
+   std::vector<ContinuousProblemData> output (data_.size());
+
+   //   TwoDHeatEquationFiniteDifferenceSolver solver;
+   std::vector<TwoDHeatEquationFiniteDifferenceSolver> solvers (0);
+  
+   for (unsigned i=0; i<data_.size(); ++i) {
+     solvers.
+       push_back(TwoDHeatEquationFiniteDifferenceSolver(order,
+   							rho,
+   							sigma_x,
+   							sigma_y,
+   							data_[i].get_a()-data_[i].get_x_0(),
+   							data_[i].get_b()-data_[i].get_x_0(),
+   							data_[i].get_c()-data_[i].get_y_0(),
+   							data_[i].get_d()-data_[i].get_y_0(),
+   							data_[i].get_x_T()-data_[i].get_x_0(),
+   							data_[i].get_y_T()-data_[i].get_y_0(),
+   							data_[i].get_t()));
+     output[i] = solvers[i].get_quantized_continuous_data();
+   }
+
+  return output;
+}
+
 
 std::vector<double> TwoDMLEFiniteDifference::
 find_mle(int order,
@@ -298,12 +382,15 @@ find_mle(int order,
   std::cout << "relative tolerance = " << opt.get_ftol_rel()
 	    << std::endl;
 
-  std::vector<double> log_sigma_x_sigma_y_rho = {log(sigma_x), 
-						 log(sigma_y), 
-						 logit_2(rho)};
+  // std::vector<double> log_sigma_x_sigma_y_rho = {log(sigma_x), 
+  // 						 log(sigma_y), 
+  // 						 logit_2(rho)};
+  std::vector<double> log_sigma_x_sigma_y_rho = {sigma_x, 
+						 sigma_y, 
+						 rho};
   
-  std::vector<double> lb = {-HUGE_VAL, -HUGE_VAL,-HUGE_VAL};
-  std::vector<double> ub = {HUGE_VAL, HUGE_VAL,HUGE_VAL};
+  std::vector<double> lb = {0, 0, -0.999};
+  std::vector<double> ub = {HUGE_VAL, HUGE_VAL,0.999};
 
   opt.set_lower_bounds(lb);
   opt.set_upper_bounds(ub);
@@ -332,15 +419,18 @@ neg_ll_for_optimizer(const std::vector<double> &x,
     // should throw an exception if not empty
   }
   
-  double sigma_x = exp(x[0]);
-  double sigma_y = exp(x[1]);
-  double rho = logit_2_inv(x[2]);
+  // double sigma_x = exp(x[0]);
+  // double sigma_y = exp(x[1]);
+  // double rho = logit_2_inv(x[2]);
+  double sigma_x = x[0];
+  double sigma_y = x[1];
+  double rho = x[2];
   
   return (negative_log_likelihood_parallel(order_,
-					  sigma_x,
-					  sigma_y,
-					  rho)
-	  - x[0] - x[1] - (log(2) + x[2] - 2*log(exp(x[2])+1)));
+					   sigma_x,
+					   sigma_y,
+					   rho));
+  //	  - x[0] - x[1] - (log(2) + x[2] - 2*log(exp(x[2])+1)));
 }
 
 double TwoDMLEFiniteDifference::
@@ -349,12 +439,12 @@ wrapper(const std::vector<double> &x,
 	void * data)
 {
   printf("Trying sigma_x=%.32f sigma_y=%.32f rho=%.32f\n", 
-	 exp(x[0]), 
-	 exp(x[1]), 
-	 logit_2_inv(x[2]));
-  std::cout << "trying sigma_x=" << exp(x[0]) << " ";
-  std::cout << "sigma_y=" << exp(x[1]) << " ";
-  std::cout << "rho=" << logit_2_inv(x[2]) << std::endl;
+	 x[0], 
+	 x[1], 
+	 x[2]);
+  std::cout << "trying sigma_x=" << x[0] << " ";
+  std::cout << "sigma_y=" << x[1] << " ";
+  std::cout << "rho=" << x[2] << std::endl;
   TwoDMLEFiniteDifference * mle = reinterpret_cast<TwoDMLEFiniteDifference*>(data);
   double out = mle->operator()(x,grad);
   std::cout << "neg log-likelihood = " << out << std::endl;

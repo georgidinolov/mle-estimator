@@ -28,6 +28,16 @@ public:
 					  double sigma_y,
 					  double rho) const;
 
+  std::vector<double> negative_log_likelihoods_parallel(int order,
+							double sigma_x,
+							double sigma_y,
+							double rho) const;
+
+  std::vector<ContinuousProblemData> quantized_continuous_data(int order,
+  							       double sigma_x,
+  							       double sigma_y,
+  							       double rho) const;
+
   std::vector<double> find_mle(int order,
 			       double rel_tol,
 			       double sigma_x,

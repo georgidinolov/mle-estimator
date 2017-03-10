@@ -38,9 +38,12 @@ int main(int argc, char *argv[]) {
 			    sigma_y,
 			    rho);
 
-   output_file << exp(log_sigma_x_sigma_y_rho[0]) << ","
-	       << exp(log_sigma_x_sigma_y_rho[1]) << ","
-	       << 2* exp(log_sigma_x_sigma_y_rho[2])/
-     (exp(log_sigma_x_sigma_y_rho[2]) + 1) - 1<< "\n";
+   // output_file << exp(log_sigma_x_sigma_y_rho[0]) << ","
+   // 	       << exp(log_sigma_x_sigma_y_rho[1]) << ","
+   // 	       << 2* exp(log_sigma_x_sigma_y_rho[2])/
+   //   (exp(log_sigma_x_sigma_y_rho[2]) + 1) - 1<< "\n";
+   output_file << log_sigma_x_sigma_y_rho[0] << ","
+	       << log_sigma_x_sigma_y_rho[1] << ","
+	       << log_sigma_x_sigma_y_rho[2] << "\n";
    output_file.close();
 }
