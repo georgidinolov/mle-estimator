@@ -361,6 +361,51 @@ quantized_continuous_data(int order,
   return output;
 }
 
+std::vector<double> TwoDMLEFiniteDifference::
+solutions_parallel(int order,
+		   double sigma_x,
+		   double sigma_y,
+		   double rho) const
+{
+  // const std::vector<ContinuousProblemData>& data = data_;
+   std::vector<double> solutions (data_.size());
+
+   //   TwoDHeatEquationFiniteDifferenceSolver solver;
+   std::vector<TwoDHeatEquationFiniteDifferenceSolver> solvers (0);
+   double l = 0;
+  
+   for (unsigned i=0; i<data_.size(); ++i) {
+     solvers.
+       push_back(TwoDHeatEquationFiniteDifferenceSolver(order,
+							rho,
+							sigma_x,
+							sigma_y,
+							data_[i].get_a()-data_[i].get_x_0(),
+							data_[i].get_b()-data_[i].get_x_0(),
+							data_[i].get_c()-data_[i].get_y_0(),
+							data_[i].get_d()-data_[i].get_y_0(),
+							data_[i].get_x_T()-data_[i].get_x_0(),
+							data_[i].get_y_T()-data_[i].get_y_0(),
+							data_[i].get_t()));
+   }
+
+  omp_set_dynamic(0);
+  unsigned i;
+  
+#pragma omp parallel private(i,l) shared(solvers, solutions,sigma_x,sigma_y,rho)
+  {
+#pragma omp for 
+    for (i=0; i<data_.size(); ++i) {
+
+      l = solvers[i].solve();
+
+      solutions[i] = l;
+    }
+  }
+
+  return solutions;
+}
+
 
 std::vector<double> TwoDMLEFiniteDifference::
 find_mle(int order,

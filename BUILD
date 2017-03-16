@@ -29,6 +29,16 @@ cc_binary(
 )
 
 cc_binary(
+	name = "2d-solutions-finite-difference",
+	srcs = ["2d-solutions-finite-difference.cpp"],
+	deps = ["//src/brownian-motion:2d-brownian-motion",
+	        "//src/mle-estimator:2d-mle-finite-difference"],
+	copts = ["-Isrc/nlopt/api",
+		 "-Isrc/finite-difference-arpack-igraph",
+		 "-O"],
+)
+
+cc_binary(
 	name = "2d-mle-finite-difference-data-1-14",
 	srcs = ["2d-mle-finite-difference-1-14.cpp"],
 	deps = ["//src/brownian-motion:2d-brownian-motion",

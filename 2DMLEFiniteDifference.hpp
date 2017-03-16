@@ -33,6 +33,11 @@ public:
 							double sigma_y,
 							double rho) const;
 
+  std::vector<double> solutions_parallel(int order,
+					 double sigma_x,
+					 double sigma_y,
+					 double rho) const;
+
   std::vector<ContinuousProblemData> quantized_continuous_data(int order,
   							       double sigma_x,
   							       double sigma_y,
