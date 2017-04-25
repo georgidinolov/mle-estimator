@@ -19,6 +19,20 @@ cc_binary(
 )
 
 cc_binary(
+	name = "2d-mle-finite-element-data",
+	srcs = ["2d-mle-finite-element.cpp"],
+	deps = ["//src/brownian-motion:2d-brownian-motion",
+	        "//src/mle-estimator:2d-mle-finite-element"],
+	copts = ["-Isrc/nlopt/api",
+		 "-Isrc/finite-difference-arpack-igraph",
+		 "-Isrc/finite-element-igraph",
+		 "-Isrc/armadillo-7.600.2/usr/include",	
+		 "-Isrc/igraph-0.7.1/include",
+		 "-Isrc/multivariate-normal",
+		 "-O"],
+)
+
+cc_binary(
 	name = "2d-likelihood-finite-difference",
 	srcs = ["2d-likelihood-finite-difference.cpp"],
 	deps = ["//src/brownian-motion:2d-brownian-motion",
@@ -102,6 +116,27 @@ cc_library(
 	         "-Isrc/images-expansion",
 		 "-Isrc/finite-difference-arpack-igraph",
 		 "-Isrc/igraph-0.7.1/include"],
+)
+
+cc_library(
+	name = "2d-mle-finite-element",
+	srcs = ["2DMLEFiniteElement.cpp"],
+	hdrs = ["2DMLEFiniteElement.hpp"],
+	visibility = ["//visibility:public"],
+	deps = ["//src/finite-element-igraph:bivariate-solver",
+		"//src/igraph-0.7.1:igraph",
+		"//src/nlopt:nlopt",
+		"//src/finite-difference-arpack-igraph:pde-data-types"],
+	linkopts = ["-lm", "-fopenmp"],
+	copts = ["-O",
+		 "-fopenmp",
+		 "-Isrc/nlopt/api",
+		 "-Isrc/armadillo-7.600.2/usr/include",
+		 "-Isrc/finite-difference-arpack-igraph",
+	         "-Isrc/images-expansion",
+		 "-Isrc/finite-element-igraph",
+		 "-Isrc/igraph-0.7.1/include",
+   		 "-Isrc/multivariate-normal"],
 )
 
 cc_library(
