@@ -6,40 +6,95 @@
 #include "2DMLEFiniteElement.hpp"
 
 int main(int argc, char *argv[]) {
-  if (argc < 8) {
+  if (argc < 7) {
     printf("You must provide input\n");
-    printf("The input is: \n data file; \n output file; \n int order of numerical accuracy (try 32, 64, or 128 for now); \n relative tolerance for function during mle estimation (as double); \n initial guess for sigma_x; \n initial guess for sigma_y; \n initial guess for rho; \n");
+    printf("The input is: \n data file list (each file on new line); \noutput directory;\nrelative tolerance for function during mle estimation (as double); \ninitial guess for sigma_x; \ninitial guess for sigma_y; \ninitial guess for rho; \n");
     exit(0);
   }
 
-  std::string data_file_dir = argv[1];
-  std::string output_file_name = argv[2];
-  int order = std::stoi(argv[3]);
-  double rel_tol = std::stod(argv[4]);
-  double sigma_x = std::stod(argv[5]);
-  double sigma_y = std::stod(argv[6]);
-  double rho = std::stod(argv[7]);
+  std::string data_file_list_dir = argv[1];
 
-  std::ofstream output_file;
-  output_file.open(output_file_name);
-  // header
-  output_file << "sigma_x, sigma_y, rho\n";
-  
+  std::vector<std::string> data_files (0);
+  std::string file;
+  std::ifstream data_file_list (data_file_list_dir);
+
+  if (data_file_list.is_open()) {
+    while (std::getline(data_file_list, file)) {
+      data_files.push_back(file);
+    }
+  }
+
+  std::string output_file_dir = argv[2];
+  double rel_tol = std::stod(argv[3]);
+  double sigma_x = std::stod(argv[4]);
+  double sigma_y = std::stod(argv[5]);
+  double rho = std::stod(argv[6]);
+
   double dx = 5e-3;
-  double rho_min = -0.9;
-  double rho_max = 0.9;
-  unsigned n_rhos = 5;
+  double rho_min = 0.60;
+  double rho_max = 0.60;
+  unsigned n_rhos = 1;
 
+  std::string data_file_dir = data_files[0];
   TwoDMLEFiniteElement mle_estimator = 
     TwoDMLEFiniteElement(data_file_dir,
-			 sigma_x,
-			 sigma_y,
-			 rho,
-			 rho_min, rho_max, n_rhos,
-			 dx,
-			 0.2,
-			 1,
-			 0.5);
+  			 sigma_x,
+  			 sigma_y,
+  			 rho,
+  			 rho_min, rho_max, n_rhos,
+  			 dx,
+  			 0.3,
+  			 1,
+  			 0.5);
+
+  for (unsigned i=0; i<data_files.size(); ++i) {
+    data_file_dir = data_files[i];
+    
+    // order 64 START
+    int order = 64;
+    std::string output_file_name = output_file_dir + 
+      "mle-results-" + std::to_string(i) + "-order-" + std::to_string(order) + ".csv";
+    mle_estimator.set_data_file(data_file_dir);
+
+    std::vector<double> log_sigma_x_sigma_y_rho = 
+      mle_estimator.find_mle(order,
+			     rel_tol,
+			     sigma_x,
+			     sigma_y,
+			     rho);
+
+    std::ofstream output_file;
+    output_file.open(output_file_name);
+    // header
+    output_file << "sigma_x, sigma_y, rho\n";
+    output_file << log_sigma_x_sigma_y_rho[0] << ","
+		<< log_sigma_x_sigma_y_rho[1] << ","
+		<< log_sigma_x_sigma_y_rho[2] << "\n";
+    output_file.close();
+    // order 64 END
+
+    // order 128 START
+    order = 128;
+    output_file_name = output_file_dir + 
+      "mle-results-" + std::to_string(i) + "-order-" + std::to_string(order) + ".csv";
+    mle_estimator.set_data_file(data_file_dir);
+
+    log_sigma_x_sigma_y_rho = 
+      mle_estimator.find_mle(order,
+			     rel_tol,
+			     sigma_x,
+			     sigma_y,
+			     rho);
+
+    output_file.open(output_file_name);
+    // header
+    output_file << "sigma_x, sigma_y, rho\n";
+    output_file << log_sigma_x_sigma_y_rho[0] << ","
+		<< log_sigma_x_sigma_y_rho[1] << ","
+		<< log_sigma_x_sigma_y_rho[2] << "\n";
+    output_file.close();
+    // order 128 END
+  }
 
   // std::cout << "mle_estimator.negative_log_likelihood_parallel(" 
   // 	    << order << ",1,1,0.5) = ";
@@ -66,15 +121,4 @@ int main(int argc, char *argv[]) {
   // 	      << "; duration = " << duration
   // 	      << std::endl;
   // }
-
-   std::vector<double> log_sigma_x_sigma_y_rho = 
-     mle_estimator.find_mle(order,
-   			    rel_tol,
-   			    sigma_x,
-   			    sigma_y,
-   			    rho);
-   output_file << log_sigma_x_sigma_y_rho[0] << ","
-   	       << log_sigma_x_sigma_y_rho[1] << ","
-   	       << log_sigma_x_sigma_y_rho[2] << "\n";
-   output_file.close();
 }

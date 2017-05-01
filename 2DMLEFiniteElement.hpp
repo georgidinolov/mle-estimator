@@ -22,7 +22,9 @@ public:
 		       double fraction_for_separation);
   TwoDMLEFiniteElement(const TwoDMLEFiniteElement& rhs);  
   ~TwoDMLEFiniteElement();
-
+  
+  void set_data_file(std::string data_file_dir);
+  
   // TwoDMLEFiniteElement(std::vector<ContinuousProblemData> data,
   // 		       double sigma_x_0,
   // 		       double sigma_y_0,

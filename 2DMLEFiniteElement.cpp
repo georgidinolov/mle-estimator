@@ -71,6 +71,7 @@ TwoDMLEFiniteElement(std::string data_file_dir,
 #pragma omp parallel for default(shared)
   for (unsigned k=0; k<n_rhos; ++k) {
     double current_rho = rho_min + drho*k;
+    printf("on basis %d, with rho = %f\n", k, current_rho);
     if (current_rho <= rho_max && current_rho >= rho_min) {
       basis_rhos[k] = current_rho;
     } else if (current_rho > rho_max) {
@@ -224,6 +225,97 @@ TwoDMLEFiniteElement::~TwoDMLEFiniteElement()
 #pragma omp parallel default(none)
   {
     delete private_bases_;
+  }
+}
+
+void TwoDMLEFiniteElement::set_data_file(std::string data_file_dir)
+{
+  data_ = std::vector<ContinuousProblemData> (0);
+  std::cout << data_file_dir << std::endl;
+  std::ifstream data_file (data_file_dir);
+  std::string value;
+
+  double x_0;
+  double y_0;
+  double t;
+  double a;
+  double x_T;
+  double b;
+  double c;
+  double y_T;
+  double d;
+
+  if (data_file.is_open()) {
+    std::cout << "FILE IS OPEN" << std::endl;
+    // go through header
+    for (int i=0; i<12; ++i) {
+      if (i < 11) {
+	std::getline(data_file, value, ',');
+      } else {
+	std::getline(data_file, value);
+      }
+    }
+
+    // first value on the row is sigma_x
+    while (std::getline(data_file, value, ',')) {
+      double sigma_x = std::stod(value);
+
+      // second value on the row is sigma_y
+      std::getline(data_file, value, ',');
+      double sigma_y = std::stod(value);
+
+      // third value on the row is rho
+      std::getline(data_file, value, ',');
+      double rho = std::stod(value);
+
+      // fourth value on the row is x_0
+      std::getline(data_file, value, ',');
+      x_0 = std::stod(value);
+
+      // fifth value on the row is y_0
+      std::getline(data_file, value, ',');
+      y_0 = std::stod(value);
+
+      // 6th  value on the row is t
+      std::getline(data_file, value, ',');
+      t = std::stod(value);
+
+      // 7th value on the row is a
+      std::getline(data_file, value, ',');
+      a = std::stod(value);
+
+      // 8th value on the row is x_T
+      std::getline(data_file, value, ',');
+      x_T = std::stod(value);
+
+      // 9th value on the row is b
+      std::getline(data_file, value, ',');
+      b = std::stod(value);
+
+      // 10th value on the row is c
+      std::getline(data_file, value, ',');
+      c = std::stod(value);
+
+      // 11th value on the row is x_T
+      std::getline(data_file, value, ',');
+      y_T = std::stod(value);
+
+      // 12th value on the row is x_T
+      // also the last value in this row
+      std::getline(data_file, value);
+      d = std::stod(value);
+
+      std::cout << "(" << a << "," << x_T << "," << b << ") "
+		<< "(" << c << "," << y_T << "," << d << ")"
+		<< std::endl;
+      ContinuousProblemData datum = ContinuousProblemData(x_T,
+							  y_T,
+							  x_0,
+							  y_0,
+							  t,
+							  a,b,c,d);
+      data_.push_back(datum);
+    }
   }
 }
 
@@ -383,13 +475,13 @@ negative_log_likelihood_parallel(int order,
 					       dx);
       gsl_vector_set(input, 0, data[i].get_x_T());
       gsl_vector_set(input, 1, data[i].get_y_T());
-      double likelihood = solver.numerical_likelihood_first_order(input, 
-								  dx_likelihood);
+      double likelihood = solver.numerical_likelihood(input, 
+						      dx_likelihood);
       // printf("Thread %d: likelihood = %f\n", omp_get_thread_num(), likelihood);
       if (likelihood > 0) {
 	neg_log_likelihoods[i] = -log(likelihood);
       } else {
-	neg_log_likelihoods[i] = 0;
+	neg_log_likelihoods[i] = -log(1e-16);
       }
     }
 
