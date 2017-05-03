@@ -50,8 +50,55 @@ int main(int argc, char *argv[]) {
   			 1,
   			 0.5);
 
-  for (unsigned i=227; i<data_files.size(); ++i) {
+  for (unsigned i=0; i<data_files.size(); ++i) {
     data_file_dir = data_files[i];
+
+    // order 16 START
+    int order = 16;
+    std::string output_file_name = output_file_dir + 
+       prefix + "mle-results-" + 
+       std::to_string(i) + "-order-" + std::to_string(order) + suffix + ".csv";
+    mle_estimator.set_data_file(data_file_dir);
+
+    std::vector<double> log_sigma_x_sigma_y_rho = 
+      mle_estimator.find_mle(order,
+    			     rel_tol,
+    			     sigma_x,
+    			     sigma_y,
+    			     rho);
+
+    std::ofstream output_file;
+    output_file.open(output_file_name);
+    // header
+    output_file << "sigma_x, sigma_y, rho\n";
+    output_file << log_sigma_x_sigma_y_rho[0] << ","
+    		<< log_sigma_x_sigma_y_rho[1] << ","
+    		<< log_sigma_x_sigma_y_rho[2] << "\n";
+    output_file.close();
+    // order 16 END
+
+    // order 32 START
+    order = 32;
+    output_file_name = output_file_dir + 
+       prefix + "mle-results-" + 
+       std::to_string(i) + "-order-" + std::to_string(order) + suffix + ".csv";
+    mle_estimator.set_data_file(data_file_dir);
+
+    log_sigma_x_sigma_y_rho = 
+      mle_estimator.find_mle(order,
+    			     rel_tol,
+    			     sigma_x,
+    			     sigma_y,
+    			     rho);
+
+    output_file.open(output_file_name);
+    // header
+    output_file << "sigma_x, sigma_y, rho\n";
+    output_file << log_sigma_x_sigma_y_rho[0] << ","
+    		<< log_sigma_x_sigma_y_rho[1] << ","
+    		<< log_sigma_x_sigma_y_rho[2] << "\n";
+    output_file.close();
+    // order 32 END
     
     // // order 64 START
     // int order = 64;
@@ -105,29 +152,7 @@ int main(int argc, char *argv[]) {
     // output_file.close();
     // // order 128 END
 
-    // order 16 START
-    int order = 16;
-    std::string output_file_name = output_file_dir + 
-       prefix + "mle-results-" + 
-       std::to_string(i) + "-order-" + std::to_string(order) + suffix + ".csv";
-    mle_estimator.set_data_file(data_file_dir);
 
-    std::vector<double> log_sigma_x_sigma_y_rho = 
-      mle_estimator.find_mle(order,
-    			     rel_tol,
-    			     sigma_x,
-    			     sigma_y,
-    			     rho);
-
-    std::ofstream output_file;
-    output_file.open(output_file_name);
-    // header
-    output_file << "sigma_x, sigma_y, rho\n";
-    output_file << log_sigma_x_sigma_y_rho[0] << ","
-    		<< log_sigma_x_sigma_y_rho[1] << ","
-    		<< log_sigma_x_sigma_y_rho[2] << "\n";
-    output_file.close();
-    // order 16 END
   }
 
   // std::cout << "mle_estimator.negative_log_likelihood_parallel(" 
