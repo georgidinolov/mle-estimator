@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   std::string prefix = argv[7];
   std::string suffix = argv[8];
 
-  double dx = 5e-3;
+  double dx = 1.0/400.0;
   double rho_min = 0.60;
   double rho_max = 0.60;
   unsigned n_rhos = 1;
@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
   			 1,
   			 0.5);
 
+  std::cout << "data_files.size() = " << data_files.size() << std::endl;
   for (unsigned i=0; i<data_files.size(); ++i) {
     data_file_dir = data_files[i];
 
