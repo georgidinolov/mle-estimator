@@ -26,10 +26,9 @@ cc_binary(
 	copts = ["-Isrc/nlopt/api",
 		 "-Isrc/finite-difference-arpack-igraph",
 		 "-Isrc/finite-element-igraph",
-		 "-Isrc/armadillo-7.600.2/usr/include",	
 		 "-Isrc/igraph-0.7.1/include",
 		 "-Isrc/multivariate-normal",
-		 "-O"],
+		 "-O2"],
 )
 
 cc_binary(
@@ -128,7 +127,7 @@ cc_library(
 		"//src/nlopt:nlopt",
 		"//src/finite-difference-arpack-igraph:pde-data-types"],
 	linkopts = ["-lm", "-fopenmp"],
-	copts = ["-O",
+	copts = ["-O2",
 		 "-fopenmp",
 		 "-Isrc/nlopt/api",
 		 "-Isrc/armadillo-7.600.2/usr/include",
