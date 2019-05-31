@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
     // // order 64 END
 
     // order 64 START
-    int order = 64;
+    int order = 32;
     std::string output_file_name = output_file_dir + 
        prefix + "mle-results-" + 
        std::to_string(i) + "-order-" + std::to_string(order) + suffix + ".csv";

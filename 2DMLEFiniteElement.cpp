@@ -85,8 +85,8 @@ namespace{
     return (weights);
   }
 
-  double find_max(const gsl_vector* weights, 
-		  const std::vector<double>& lambdas, 
+  double find_max(const gsl_vector* weights,
+		  const std::vector<double>& lambdas,
 		  const std::vector<double>& alphas,
 		  const std::vector<double>& t_tildes,
 		  double small_t) {
@@ -907,6 +907,11 @@ negative_log_likelihood_parallel(int order,
       gsl_vector_set(input, 0, x_t_tilde);
       gsl_vector_set(input, 1, y_t_tilde);
 
+      double t_tilde_threshold = 0.50;
+      if (std::abs(rho_star) <= 0.80) {
+	t_tilde_threshold = 0.30;
+      }
+
       double likelihood = 0.0;
 
       if (t_tilde >= 0.30) {
@@ -972,7 +977,7 @@ negative_log_likelihood_parallel(int order,
 		      [n = 0,
 		       &solver,
 		       input,
-		       &t_tildes_small] () mutable { 
+		       &t_tildes_small] () mutable {
 			double out = solver.
 			  likelihood_small_t_41_truncated_symmetric(input,
 								    t_tildes_small[n],
@@ -984,17 +989,13 @@ negative_log_likelihood_parallel(int order,
 		      [n = 0,
 		       &log_ys_small] () mutable { double out = exp(log_ys_small[n]);
 			n++;
-			return out;});	
+			return out;});
 
 	std::vector<double> t_tildes = t_tildes_small;
 	std::vector<double> ys = ys_small;
 	std::vector<double> log_ys = log_ys_small;
 
-	double t_tilde_2 = 0.50;
-	if (std::abs(rho_star) <= 0.80) {
-	  t_tilde_2 = 0.30;
-	}
-
+	double t_tilde_2 = t_tilde_threshold;
 	while (number_big_t_points > 0) {
 	  solver.set_diffusion_parameters_and_data(1.0,
 						   sigma_y_tilde,
@@ -1010,12 +1011,12 @@ negative_log_likelihood_parallel(int order,
 	  double y2 = solver.numerical_likelihood(input,
 						  dx_likelihood);
 
-	  // if (std::isnan(y2)) {
-	  //   y2 = 0.0;
-	  // }
+	  if (std::isnan(y2)) {
+	    y2 = 0.0;
+	  }
 
 	  while (std::isnan(std::log(y2))) {
-	    if (t_tilde_2 <= 4) {
+	    if (t_tilde_2 <= 20) {
 	      t_tilde_2 = t_tilde_2 + 0.50;
 	    } else {
 	      t_tilde_2 = t_tilde_2 + 20.0;
@@ -1041,11 +1042,17 @@ negative_log_likelihood_parallel(int order,
 
 	  t_tildes.push_back(t_tilde_2);
 	  ys.push_back(y2);
+	  log_ys.push_back(log(y2));
 
-	  t_tilde_2 = t_tilde_2 + 0.50;
+	  if (std::abs(rho_star) <= 0.80) {
+	    t_tilde_2 = t_tilde_2 + 0.50;
+	  } else {
+	    t_tilde_2 = t_tilde_2 + 0.50;
+	  }
+
 	  number_big_t_points--;
 	}
-	
+
 	gsl_vector* weights = find_weights(ys, t_tildes, alphas, lambdas);
 	double t_max = find_max(weights, lambdas, alphas, t_tildes, small_t);
 	solver.set_diffusion_parameters_and_data(1.0,
@@ -1062,9 +1069,9 @@ negative_log_likelihood_parallel(int order,
 	double galerkin_like = solver.numerical_likelihood(input,
 							   dx_likelihood);
 
-	double approx_log_like = alphas[0]*log(t_max) + lambdas[0]*t_max + 
+	double approx_log_like = alphas[0]*log(t_max) + lambdas[0]*t_max +
 	  log(gsl_vector_get(weights, 0) + gsl_vector_get(weights, 1)*exp((lambdas[1]-lambdas[0]) * t_max));
-	
+
 	if (!std::isnan(log(galerkin_like)) &
 	    (log(galerkin_like) > approx_log_like) ) {
 
@@ -1082,12 +1089,12 @@ negative_log_likelihood_parallel(int order,
 	double Delta = lambdas[1]-lambdas[0];
 	double function_val = alphas[0]*log(t_max) + lambdas[0]*t_max + log(w1 + w2*exp(Delta*t_max));
 	double first_deriv =  lambdas[0] + alphas[0]/t_max + Delta*w2*exp(Delta*t_max)/(w1 + w2*exp(Delta*t_max));
-	double second_deriv = -alphas[0]/(t_max*t_max) + 
+	double second_deriv = -alphas[0]/(t_max*t_max) +
 	  Delta*Delta*w2*exp(Delta*t_max)/(w1 + w2*exp(Delta*t_max)) -
 	  Delta*Delta*w2*w2*exp(2*Delta*t_max)/std::pow(w1 + w2*exp(Delta*t_max), 2.0);
 	double deriv_matrix_array [4] = {-1.0/t_max, 1.0/(t_max*t_max), 1.0/(t_max*t_max), -2.0/(t_max*t_max*t_max)};
 	gsl_matrix_view deriv_matrix_view = gsl_matrix_view_array(deriv_matrix_array, 2,2);
-	
+
 	gsl_vector* gamma_beta_t_max = gsl_vector_alloc(2);
 	gsl_vector* b_vector = gsl_vector_alloc(2);
 	gsl_vector_set(b_vector, 0, first_deriv);
@@ -1106,8 +1113,8 @@ negative_log_likelihood_parallel(int order,
 	double log_omega_t_max = function_val + gamma_t_max*log(t_max) + beta_t_max/t_max;
 	gsl_vector_free(gamma_beta_t_max);
 
-	// LHS matching 
-	double log_omega_t_small = -1.0*log(M_PI*std::sqrt(2)) - 
+	// LHS matching
+	double log_omega_t_small = -1.0*log(M_PI*std::sqrt(2)) -
 	  4.5*(log(2.0) +
 	       2.0*log(sigma_y_tilde) +
 	       log(1-rho_for_small_t*rho_for_small_t));
@@ -1116,12 +1123,12 @@ negative_log_likelihood_parallel(int order,
 	std::vector<double> dPdbxs = solver.dPdbx(input, dx_likelihood);
 	std::vector<double> dPdays = solver.dPday(input, dx_likelihood);
 	std::vector<double> dPdbys = solver.dPdby(input, dx_likelihood);
-	
+
 	std::vector<double> betas_t_small = std::vector<double> (4);
 	unsigned nn = 0;
-	std::generate(betas_t_small.begin(), 
-		      betas_t_small.end(), 
-		      [&] () mutable { 
+	std::generate(betas_t_small.begin(),
+		      betas_t_small.end(),
+		      [&] () mutable {
 			double beta_t_small = 1.0/(2.0*
 						   sigma_y_tilde*
 						   sigma_y_tilde*
@@ -1146,8 +1153,9 @@ negative_log_likelihood_parallel(int order,
 	// MATCH CONSTANTS END
 
 	double matched_sol = log_omega - gamma*log(t_tilde) - beta/t_tilde;
-	printf("ys[1]=%f, ys[2]=%f, ys[3]=%f,\n, lambdas[0] = %f, lambdas[1] = %f, small_t = %f, t_tildes_last = %f, Delta = %f, alphas[0] = %f, t_max = %f, w1 = %f, w2 = %f, function_val = %f, log_omega_t_small = %f, log_omega_t_max = %f, log_omega = %f, gamma = %f, beta = %f, matched_sol = %f\n", 
-	       ys[0], ys[1], ys[2],
+	printf("data point = %d, log_ys[1]=%f, log_ys[2]=%f, log_ys[3]=%f, lambdas[0] = %f, lambdas[1] = %f, small_t = %f, t_tildes_last = %f, Delta = %f, alphas[0] = %f, t_max = %f, w1 = %f, w2 = %f, function_val = %f, log_omega_t_small = %f, log_omega_t_max = %f, log_omega = %f, gamma = %f, beta = %f, matched_sol = %f\n",
+	       i,
+	       log_ys[0], log_ys[1], log_ys[2],
 	       lambdas[0],
 	       lambdas[1],
 	       small_t,
